@@ -98,9 +98,3 @@ def parseExpression(tokens: Iterable[Token], tree: Node):
 def parseTokens(tokens: Iterable[Token]):
     tree = parseProgram(tokens)
     return tree
-
-
-tokens = createTokens()
-tokensIterator = iter(tokens)
-tree = parseTokens(tokensIterator)
-print("")
