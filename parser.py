@@ -1,35 +1,6 @@
 from lexer import createTokens, Token, TokenType
 from typing import Iterable
-
-
-class ProgramNode:
-    pass
-
-
-class FunctionNode:
-    def __init__(self, name):
-        self.name = name
-
-
-class ConstantNode:
-    def __init__(self, value):
-        self.value = value
-
-
-class UnaryOperatorNode:
-    def __init__(self, name):
-        self.name = name
-
-
-class BinaryOperatorNode:
-    def __init__(self, name):
-        self.name = name
-
-
-class Node:
-    def __init__(self):
-        self.left = None
-        self.right = None
+from ATS_nodes import ProgramNode, FunctionNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node
 
 
 def parseProgram(tokens: Iterable[Token]):
@@ -88,11 +59,9 @@ def parseStatement(tokens: Iterable[Token], tree: Node):
 def parseExpression(tokens: Iterable[Token], tree: Node):
     token = next(tokens)
     if (token.tokenType != TokenType.integerLiteral):
-        raise "int literal expected"
+        raise "expression expected"
 
     tree.data = ConstantNode(token.value)
-
-    # def parseInt(tokens: List[Token]):
 
 
 def parseTokens(tokens: Iterable[Token]):

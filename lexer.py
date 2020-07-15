@@ -7,10 +7,13 @@ class TokenType:
     openParenthesis = "\\("
     closeParenthesis = "\\)"
     semiColon = ";"
-    intKeyword = "int"
-    returnKeyword = "return"
+    intKeyword = "int "
+    returnKeyword = "return "
     identifier = "[a-zA-Z]\\w*"
     integerLiteral = "\\d+"
+    negation = "-"
+    bitwiseComplement = "~"
+    logicalNegation = "!"
 
 
 class Token:
@@ -22,15 +25,14 @@ class Token:
         self.tokenType = tokenType
 
 
-def createTokens():
-
-    f = open("return_2.c", "r")
-    text = f.read()
+def createTokens(text):
 
     stringTokens = re.findall(
         f"{TokenType.openBrace}|{TokenType.closeBrace}|{TokenType.openParenthesis}"
         f"|{TokenType.closeParenthesis}|{TokenType.semiColon}|{TokenType.intKeyword}|{TokenType.returnKeyword}"
-        f"|{TokenType.identifier}|{TokenType.integerLiteral}", text)
+        f"|{TokenType.integerLiteral}|{TokenType.identifier}", text)
+
+    print(stringTokens, TokenType.returnKeyword)
 
     def mapTokenToType(token):
         if (re.match(TokenType.openBrace, token)):
@@ -51,6 +53,12 @@ def createTokens():
             return Token(token, TokenType.identifier)
         elif (re.match(TokenType.integerLiteral, token)):
             return Token(token, TokenType.integerLiteral)
+        elif (re.match(TokenType.negation, token)):
+            return Token(token, TokenType.negation)
+        elif (re.match(TokenType.bitwiseComplement, token)):
+            return Token(token, TokenType.bitwiseComplement)
+        elif (re.match(TokenType.logicalNegation, token)):
+            return Token(token, TokenType.logicalNegation)
         else:
             raise "invalid token"
 
