@@ -1,8 +1,0 @@
-
-0 bitwise.c
-255 bitwise_zero.c
-251 neg.c
-1 nested_ops_2.c
-0 nested_ops.c
-0 not_five.c
-1 not_zero.c

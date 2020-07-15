@@ -34,4 +34,4 @@ for file in files:
     system(f'gcc ./tests/{file} -o ./compiledWithGCC/{file}')
 
 system('echo "" > ./results.txt; for file in $(ls ./compiled); do ./compiled/$file; echo "$? $file">> ./results.txt; done')
-system('echo "" > ./results_real.txt; for file in $(ls ./tests); do ./compiledWithGCC/$file; echo "$? $file">> ./results_real.txt; done')
+system('echo "" > ./resultsFromGCC.txt; for file in $(ls ./tests); do ./compiledWithGCC/$file; echo "$? $file">> ./resultsFromGCC.txt; done')
