@@ -22,6 +22,11 @@ class BinaryOperatorNode:
         self.name = name
 
 
+class KeywordNode:
+    def __init__(self, name):
+        self.name = name
+
+
 class Node:
     def __init__(self):
         self.left = None

@@ -30,9 +30,8 @@ def createTokens(text):
     stringTokens = re.findall(
         f"{TokenType.openBrace}|{TokenType.closeBrace}|{TokenType.openParenthesis}"
         f"|{TokenType.closeParenthesis}|{TokenType.semiColon}|{TokenType.intKeyword}|{TokenType.returnKeyword}"
-        f"|{TokenType.integerLiteral}|{TokenType.identifier}", text)
-
-    print(stringTokens, TokenType.returnKeyword)
+        f"|{TokenType.integerLiteral}|{TokenType.identifier}|{TokenType.negation}|{TokenType.bitwiseComplement}"
+        f"|{TokenType.logicalNegation}", text)
 
     def mapTokenToType(token):
         if (re.match(TokenType.openBrace, token)):

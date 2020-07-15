@@ -1,1 +1,7 @@
 __pycache__
+.vscode
+compiled
+results
+results.txt
+compiledWithGCC
+tests

@@ -1,6 +1,6 @@
 from lexer import createTokens, Token, TokenType
 from typing import Iterable
-from ATS_nodes import ProgramNode, FunctionNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node
+from ATS_nodes import ProgramNode, FunctionNode, KeywordNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node
 
 
 def parseProgram(tokens: Iterable[Token]):
@@ -13,6 +13,7 @@ def parseProgram(tokens: Iterable[Token]):
 
 def parseFunction(tokens: Iterable[Token], tree: Node):
     typeKeyword = next(tokens)
+
     if (typeKeyword.tokenType != TokenType.intKeyword):
         raise "type expected"
 
@@ -47,7 +48,7 @@ def parseStatement(tokens: Iterable[Token], tree: Node):
     if (token.tokenType != TokenType.returnKeyword):
         raise "return expected"
 
-    tree.data = UnaryOperatorNode(token.value)
+    tree.data = KeywordNode(token.value)
     tree.left = Node()
     parseExpression(tokens, tree.left)
 
@@ -58,10 +59,17 @@ def parseStatement(tokens: Iterable[Token], tree: Node):
 
 def parseExpression(tokens: Iterable[Token], tree: Node):
     token = next(tokens)
-    if (token.tokenType != TokenType.integerLiteral):
+    if (token.tokenType == TokenType.integerLiteral):
+        tree.data = ConstantNode(token.value)
+    elif (token.tokenType == TokenType.negation
+          or token.tokenType == TokenType.bitwiseComplement
+          or token.tokenType == TokenType.logicalNegation
+          ):
+        tree.data = UnaryOperatorNode(token.value)
+        tree.left = Node()
+        parseExpression(tokens, tree.left)
+    else:
         raise "expression expected"
-
-    tree.data = ConstantNode(token.value)
 
 
 def parseTokens(tokens: Iterable[Token]):
