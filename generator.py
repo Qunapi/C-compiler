@@ -5,21 +5,21 @@ from ATS_nodes import ProgramNode, KeywordNode, FunctionNode, ConstantNode, Unar
 
 def generate(tree):
     result = ''
-    result = processNode(tree, result)
+    result += processNode(tree, result)
     result += '\n'
     return result
 
 
 def processNode(node, result):
-    if isinstance(node.data, ProgramNode):
+    if isinstance(node, ProgramNode):
         result += '    .globl	_main\n'
         result = processNode(node.left, result)
-    elif isinstance(node.data, FunctionNode):
-        funcName = node.data.name
+    elif isinstance(node, FunctionNode):
+        funcName = node.name
         result += f"_{funcName}:\n"
         result = processNode(node.left, result)
-    elif isinstance(node.data, KeywordNode):
-        if node.data.name == TokenType.returnKeyword:
+    elif isinstance(node, KeywordNode):
+        if node.name == TokenType.returnKeyword:
             result = processExpression(node.left, result)
             result += f"    ret"
 
@@ -27,18 +27,51 @@ def processNode(node, result):
 
 
 def processExpression(node, result):
-    if isinstance(node.data, ConstantNode):
-        result += f"    movl ${node.data.value}, %eax\n"
-    elif isinstance(node.data, UnaryOperatorNode):
-        if node.data.name == TokenType.negation:
+    if isinstance(node, ConstantNode):
+        result += f"    movq ${node.value}, %rax\n"
+    elif isinstance(node, UnaryOperatorNode):
+        if node.name == TokenType.negation:
             result = processExpression(node.left, result)
-            result += f"    neg %eax\n"
-        elif node.data.name == TokenType.bitwiseComplement:
+            result += f"    neg %rax\n"
+        elif node.name == TokenType.bitwiseComplement:
             result = processExpression(node.left, result)
-            result += f"    not %eax\n"
-        elif node.data.name == TokenType.logicalNegation:
+            result += f"    not %rax\n"
+        elif node.name == TokenType.logicalNegation:
             result = processExpression(node.left, result)
-            result += f"    cmpl $0, %eax\n"
-            result += f"    movl $0, %eax\n"
+            result += f"    cmpl $0, %rax\n"
+            result += f"    movq $0, %rax\n"
             result += f"    sete %al\n"
+    elif isinstance(node, BinaryOperatorNode):
+        if node.name == TokenType.negation:
+            result = processExpression(node.right, result)
+            result += f"    push %rax\n"
+            result = processExpression(node.left, result)
+            result += f"    pop %rbx\n"
+            result += f"    sub %rbx, %rax\n"
+            
+        elif node.name == TokenType.addition:
+            result = processExpression(node.right, result)
+            result += f"    push %rax\n"
+            result = processExpression(node.left, result)
+            result += f"    pop %rbx\n"
+            result += f"    add %rbx, %rax\n"
+
+        elif node.name == TokenType.multiplication:
+            result = processExpression(node.right, result)
+            result += f"    push %rax\n"
+            result = processExpression(node.left, result)
+            result += f"    pop %rbx\n"
+            result += f"    imul %rbx, %rax\n"
+
+        elif node.name == TokenType.division:
+            result = processExpression(node.right, result)
+            result += f"    push %rax\n"
+            result = processExpression(node.left, result)
+            result += f"    pop %rbx\n"
+
+            result += f"    movq $0, %rdx\n"
+            result += f"    cqo\n"
+            result += f"    idiv %rbx\n"
+
+
     return result

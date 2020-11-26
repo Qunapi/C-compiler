@@ -7,13 +7,16 @@ class TokenType:
     openParenthesis = "\\("
     closeParenthesis = "\\)"
     semiColon = ";"
-    intKeyword = "int "
-    returnKeyword = "return "
+    intKeyword = "int"
+    returnKeyword = "return"
     identifier = "[a-zA-Z]\\w*"
     integerLiteral = "\\d+"
     negation = "-"
     bitwiseComplement = "~"
     logicalNegation = "!"
+    addition = "\\+"
+    multiplication = "\\*"
+    division = "/"
 
 
 class Token:
@@ -27,11 +30,12 @@ class Token:
 
 def createTokens(text):
 
+
     stringTokens = re.findall(
         f"{TokenType.openBrace}|{TokenType.closeBrace}|{TokenType.openParenthesis}"
         f"|{TokenType.closeParenthesis}|{TokenType.semiColon}|{TokenType.intKeyword}|{TokenType.returnKeyword}"
         f"|{TokenType.integerLiteral}|{TokenType.identifier}|{TokenType.negation}|{TokenType.bitwiseComplement}"
-        f"|{TokenType.logicalNegation}", text)
+        f"|{TokenType.logicalNegation}|{TokenType.addition}|{TokenType.multiplication}|{TokenType.division}", text)
 
     def mapTokenToType(token):
         if (re.match(TokenType.openBrace, token)):
@@ -58,9 +62,14 @@ def createTokens(text):
             return Token(token, TokenType.bitwiseComplement)
         elif (re.match(TokenType.logicalNegation, token)):
             return Token(token, TokenType.logicalNegation)
+        elif (re.match(TokenType.addition, token)):
+            return Token(token, TokenType.addition)
+        elif (re.match(TokenType.multiplication, token)):
+            return Token(token, TokenType.multiplication)
+        elif (re.match(TokenType.division, token)):
+            return Token(token, TokenType.division)
         else:
             raise "invalid token"
-
     tokens = []
     for token in stringTokens:
         tokens.append(mapTokenToType(token))
