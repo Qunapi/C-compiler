@@ -12,11 +12,11 @@ def generate(tree):
 
 def processNode(node, result):
     if isinstance(node.data, ProgramNode):
-        result += '    .globl	main\n'
+        result += '    .globl	_main\n'
         result = processNode(node.left, result)
     elif isinstance(node.data, FunctionNode):
         funcName = node.data.name
-        result += f"{funcName}:\n"
+        result += f"_{funcName}:\n"
         result = processNode(node.left, result)
     elif isinstance(node.data, KeywordNode):
         if node.data.name == TokenType.returnKeyword:

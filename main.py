@@ -3,7 +3,8 @@ from lexer import createTokens
 from parser import parseTokens
 from generator import generate
 from pathlib import Path
-
+from comparison import compare
+import subprocess
 
 files = listdir("./tests")
 
@@ -30,8 +31,13 @@ for file in files:
     resultFile.write(result)
     resultFile.close()
 
-    system(f'gcc ./results/{fileName}.s -o ./compiled/{fileName}')
+    system(f'gcc ./results/{fileName}.s -o ./compiled/{fileName}.c')
     system(f'gcc ./tests/{file} -o ./compiledWithGCC/{file}')
 
-system('echo "" > ./results.txt; for file in $(ls ./compiled); do ./compiled/$file; echo "$? $file">> ./results.txt; done')
-system('echo "" > ./resultsFromGCC.txt; for file in $(ls ./tests); do ./compiledWithGCC/$file; echo "$? $file">> ./resultsFromGCC.txt; done')
+print ("GCC start")
+subprocess.call(['sh', './scripts/echoGCCresults.sh']) 
+
+print ("main start")
+subprocess.call(['sh', './scripts/echoResults.sh']) 
+
+compare()
