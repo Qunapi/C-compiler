@@ -26,9 +26,9 @@ for file in files:
     print(f"Processing {file}")
     tokens = createTokens(text)
     tokensIterator = peekable(tokens)
-    tree = parseTokens(tokensIterator)
+    tree, variables = parseTokens(tokensIterator)
 
-    result = generate(tree)
+    result = generate(tree, variables)
 
     resultFile = open(f"./results/{fileName}.s", "w")
 

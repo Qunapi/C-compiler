@@ -22,10 +22,23 @@ class BinaryOperatorNode:
         self.name = name
 
 
-class KeywordNode:
+class ReturnNode:
     def __init__(self, name):
         self.name = name
 
+class DeclarationNode:
+    def __init__(self, name):
+        self.name = name
+
+class VariableNode:
+    def __init__(self, name):
+        self.name = name
+
+class AssignNode:
+    def __init__(self, name):
+        self.left = None
+        self.right = None
+        self.name = name
 
 class Node:
     def __init__(self):
