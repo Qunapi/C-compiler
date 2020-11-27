@@ -11,6 +11,8 @@ def compare ():
     i = 1
 
     isOk = True
+    print(f'failure, resultsFromGCC  | results \n')
+
     while i < len(Lines1):
         if (Lines1[i] == Lines2[i]):
             msg = f'success, "{Lines1[i].rstrip()}" | "{Lines2[i].rstrip()}"\n'

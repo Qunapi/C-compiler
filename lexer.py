@@ -13,10 +13,19 @@ class TokenType:
     integerLiteral = "\\d+"
     negation = "-"
     bitwiseComplement = "~"
-    logicalNegation = "!"
     addition = "\\+"
     multiplication = "\\*"
     division = "/"
+    logicalAnd = '&&'
+    logicalOr = '\\|\\|'
+    equal = '=='
+    notEqual = '!='
+    lessThanEqual = '<='
+    lessThan = '<'
+    greaterThanOrEqual = '>='
+    greaterThen = '>'
+    logicalNegation = "!"
+    assignment = '='
 
 
 class Token:
@@ -30,12 +39,14 @@ class Token:
 
 def createTokens(text):
 
-
     stringTokens = re.findall(
         f"{TokenType.openBrace}|{TokenType.closeBrace}|{TokenType.openParenthesis}"
         f"|{TokenType.closeParenthesis}|{TokenType.semiColon}|{TokenType.intKeyword}|{TokenType.returnKeyword}"
         f"|{TokenType.integerLiteral}|{TokenType.identifier}|{TokenType.negation}|{TokenType.bitwiseComplement}"
-        f"|{TokenType.logicalNegation}|{TokenType.addition}|{TokenType.multiplication}|{TokenType.division}", text)
+        f"|{TokenType.addition}|{TokenType.multiplication}|{TokenType.division}"
+        f"|{TokenType.logicalAnd}|{TokenType.logicalOr}|{TokenType.equal}|{TokenType.notEqual}"
+        f"|{TokenType.lessThanEqual}|{TokenType.lessThan}|{TokenType.greaterThanOrEqual}|{TokenType.greaterThen}"
+        f"|{TokenType.logicalNegation}|{TokenType.assignment}", text)
 
     def mapTokenToType(token):
         if (re.match(TokenType.openBrace, token)):
@@ -60,16 +71,35 @@ def createTokens(text):
             return Token(token, TokenType.negation)
         elif (re.match(TokenType.bitwiseComplement, token)):
             return Token(token, TokenType.bitwiseComplement)
-        elif (re.match(TokenType.logicalNegation, token)):
-            return Token(token, TokenType.logicalNegation)
         elif (re.match(TokenType.addition, token)):
             return Token(token, TokenType.addition)
         elif (re.match(TokenType.multiplication, token)):
             return Token(token, TokenType.multiplication)
         elif (re.match(TokenType.division, token)):
             return Token(token, TokenType.division)
+        elif (re.match(TokenType.logicalAnd, token)):
+            return Token(token, TokenType.logicalAnd)
+        elif (re.match(TokenType.logicalOr, token)):
+            return Token(token, TokenType.logicalOr)
+        elif (re.match(TokenType.equal, token)):
+            return Token(token, TokenType.equal)
+        elif (re.match(TokenType.notEqual, token)):
+            return Token(token, TokenType.notEqual)
+        elif (re.match(TokenType.lessThanEqual, token)):
+            return Token(token, TokenType.lessThanEqual)
+        elif (re.match(TokenType.lessThan, token)):
+            return Token(token, TokenType.lessThan)
+        elif (re.match(TokenType.greaterThanOrEqual, token)):
+            return Token(token, TokenType.greaterThanOrEqual)
+        elif (re.match(TokenType.greaterThen, token)):
+            return Token(token, TokenType.greaterThen)
+        elif (re.match(TokenType.logicalNegation, token)):
+            return Token(token, TokenType.logicalNegation)
+        elif (re.match(TokenType.assignment, token)):
+            return Token(token, TokenType.assignment)
         else:
             raise "invalid token"
+
     tokens = []
     for token in stringTokens:
         tokens.append(mapTokenToType(token))

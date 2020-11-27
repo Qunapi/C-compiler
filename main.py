@@ -36,7 +36,7 @@ for file in files:
     resultFile.close()
 
     system(f'gcc ./results/{fileName}.s -o ./compiled/{fileName}.c')
-    system(f'gcc ./tests/{file} -o ./compiledWithGCC/{file}')
+    system(f'gcc -w ./tests/{file}  -o ./compiledWithGCC/{file}')
 
 
 print ("GCC start")

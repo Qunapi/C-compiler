@@ -4,10 +4,12 @@ import itertools
 
 data = None
 
+
 def parseProgram(tokens):
     tree = ProgramNode()
     data = tree
     tree.left = parseFunction(tokens)
+    # print2DUtil(tree)
     return tree
 
 
@@ -61,6 +63,55 @@ def parseStatement(tokens):
 
 
 def parseExpression(tokens):
+    term = parseLogicalAndExpression(tokens)
+    nextToken = tokens.peek()
+
+    while nextToken.tokenType == TokenType.logicalOr:
+        op = next(tokens).tokenType
+        nextTerm = parseLogicalAndExpression(tokens)
+        term = parseBinaryOperator(op, term, nextTerm)
+        nextToken = tokens.peek()
+    return term
+
+
+def parseLogicalAndExpression(tokens):
+    term = parseEqualityExpression(tokens)
+    nextToken = tokens.peek()
+
+    while nextToken.tokenType == TokenType.logicalAnd:
+        op = next(tokens).tokenType
+        nextTerm = parseEqualityExpression(tokens)
+        term = parseBinaryOperator(op, term, nextTerm)
+        nextToken = tokens.peek()
+    return term
+
+
+def parseEqualityExpression(tokens):
+    term = parseRelationalExpression(tokens)
+    nextToken = tokens.peek()
+
+    while nextToken.tokenType == TokenType.equal or nextToken.tokenType == TokenType.notEqual:
+        op = next(tokens).tokenType
+        nextTerm = parseRelationalExpression(tokens)
+        term = parseBinaryOperator(op, term, nextTerm)
+        nextToken = tokens.peek()
+    return term
+
+
+def parseRelationalExpression(tokens):
+    term = parseAdditiveExpression(tokens)
+    nextToken = tokens.peek()
+
+    while (nextToken.tokenType == TokenType.lessThan or nextToken.tokenType == TokenType.lessThanEqual or
+         nextToken.tokenType == TokenType.greaterThen or nextToken.tokenType == TokenType.greaterThanOrEqual):
+
+        op = next(tokens).tokenType
+        nextTerm = parseAdditiveExpression(tokens)
+        term = parseBinaryOperator(op, term, nextTerm)
+        nextToken = tokens.peek()
+    return term
+
+def parseAdditiveExpression(tokens):
     term = parseTerm(tokens)
     nextToken = tokens.peek()
 
@@ -164,3 +215,4 @@ def print2DUtil(root, space = 0) :
     # Process left child  
     if (hasattr(root, 'left')):
         print2DUtil(root.left, space)  
+
