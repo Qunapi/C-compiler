@@ -95,6 +95,7 @@ def parseExpression(tokens):
     else:
         tokens.prepend(variable)
         term = parseLogicalAndExpression(tokens)
+        nextToken = tokens.peek()
 
         while nextToken.tokenType == TokenType.logicalOr:
             op = next(tokens).tokenType
