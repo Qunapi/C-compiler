@@ -44,3 +44,15 @@ class Node:
     def __init__(self):
         self.left = None
         self.right = None
+
+class IfNode: 
+    def __init__(self):
+        self.true_branch = None
+        self.false_branch = None
+        self.condition = None
+
+class ConditionalNode:
+    def __init__(self):
+        self.true_branch = None
+        self.false_branch = None
+        self.condition = None

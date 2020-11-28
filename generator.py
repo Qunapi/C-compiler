@@ -1,7 +1,7 @@
 from lexer import create_tokens, Token, TokenType
 from parser import parse_tokens
-from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node, VariableNode, DeclarationNode, AssignNode
-from helpers import create_clause_label, create_end_label
+from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node, VariableNode, DeclarationNode, AssignNode, IfNode, ConditionalNode
+from helpers import create_clause_label, create_end_label, create_false_branch_label, create_post_conditional_number
 
 variables = {}
 stack_index = -8
@@ -27,16 +27,12 @@ def process_node(node, result):
         result += f"    movq %rsp, %rbp\n"
         result += f"    movq $0, %rax\n"
 
-        for statement in node.statements:
+        for statement in node.block_items:
             result = process_node(statement, result)
 
         result += f"    movq %rbp, %rsp\n"
         result += f"    pop %rbp\n"
         result += f"    ret"
-
-    elif isinstance(node, ReturnNode):
-        if node.name == TokenType.return_keyword:
-            result = process_expression(node.left, result)
     elif isinstance(node, DeclarationNode):
         global stack_index
         variables[node.name] = stack_index
@@ -55,6 +51,9 @@ def process_node(node, result):
 def process_expression(node, result):
     if isinstance(node, ConstantNode):
         result += f"    movq ${node.value}, %rax\n"
+    elif isinstance(node, ReturnNode):
+        if node.name == TokenType.return_keyword:
+            result = process_expression(node.left, result)
     elif isinstance(node, VariableNode):
         offset = variables[node.name]
         result += f"    movq {offset}(%rbp), %rax\n"
@@ -62,6 +61,31 @@ def process_expression(node, result):
         result = process_expression(node.left, result)
         offset = variables[node.name]
         result += f"    movq %rax, {offset}(%rbp)\n"
+    elif isinstance(node, ConditionalNode):
+        result = process_expression(node.condition, result)
+        result += f"    cmp $0, %rax\n"
+        false_branch_label = create_false_branch_label()
+        result += f"    je {false_branch_label}\n"
+        result = process_expression(node.true_branch, result)
+        post_conditional__label = create_post_conditional_number()
+        result += f"    jmp {post_conditional__label}\n"
+        result += f"{false_branch_label}:\n"
+        result = process_expression(node.false_branch, result)
+        result += f"{post_conditional__label}:\n"
+    elif isinstance(node, IfNode):
+        result = process_expression(node.condition, result)
+        result += f"    cmp $0, %rax\n"
+        false_branch_label = create_false_branch_label()
+        result += f"    je {false_branch_label}\n"
+        result = process_expression(node.true_branch, result)
+        post_conditional__label = create_post_conditional_number()
+        result += f"    jmp {post_conditional__label}\n"
+        result += f"{false_branch_label}:\n"
+
+        if(node.false_branch != None):
+            result = process_expression(node.false_branch, result)
+
+        result += f"{post_conditional__label}:\n"
     elif isinstance(node, UnaryOperatorNode):
         if node.name == TokenType.negation:
             result = process_expression(node.left, result)

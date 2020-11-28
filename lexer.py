@@ -34,11 +34,11 @@ class TokenType:
 
 class Token:
     value: str
-    tokenType: TokenType
+    token_type: TokenType
 
     def __init__(self, value, token_type):
         self.value = value
-        self.tokenType = token_type
+        self.token_type = token_type
 
 
 def create_tokens(text):
