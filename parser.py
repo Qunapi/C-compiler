@@ -1,67 +1,79 @@
-from lexer import createTokens, Token, TokenType
+from lexer import create_tokens, Token, TokenType
 from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node, VariableNode, DeclarationNode, AssignNode
 
 variables = {}
 
 
-def parseProgram(tokens):
+def parse_program(tokens):
     tree = ProgramNode()
-    tree.left = parseFunction(tokens)
+    tree.left = parse_function(tokens)
     # print2DUtil(tree)
     return tree
 
 
-def parseFunction(tokens):
-    typeKeyword = next(tokens)
+def parse_function(tokens):
+    type_keyword = next(tokens)
 
-    if (typeKeyword.tokenType != TokenType.intKeyword):
+    if (type_keyword.tokenType != TokenType.int_keyword):
         raise "type expected"
 
-    functionIdentifier = next(tokens)
-    if (functionIdentifier.tokenType != TokenType.identifier):
+    function_identifier = next(tokens)
+    if (function_identifier.tokenType != TokenType.identifier):
         raise "identifier expected"
 
-    node = FunctionNode(functionIdentifier.value)
+    node = FunctionNode(function_identifier.value)
 
-    openParenthesis = next(tokens)
-    if (openParenthesis.tokenType != TokenType.openParenthesis):
+    open_parenthesis = next(tokens)
+    if (open_parenthesis.tokenType != TokenType.open_parenthesis):
         raise "( expected"
 
-    closeParenthesis = next(tokens)
-    if (closeParenthesis.tokenType != TokenType.closeParenthesis):
+    close_parenthesis = next(tokens)
+    if (close_parenthesis.tokenType != TokenType.close_parenthesis):
         raise ") expected"
 
-    openBraceToken = next(tokens)
-    if (openBraceToken.tokenType != TokenType.openBrace):
+    open_brace_token = next(tokens)
+    if (open_brace_token.tokenType != TokenType.open_brace):
         raise "{ expected"
 
-    nextToken = tokens.peek()
+    next_token = tokens.peek()
     node.statements = []
 
-    while nextToken.tokenType != TokenType.closeBrace:
-        node.statements.append(parseStatement(tokens))
-        nextToken = tokens.peek()
+    while next_token.tokenType != TokenType.close_brace:
+        node.statements.append(parse_statement(tokens))
+        next_token = tokens.peek()
 
-    closeBraceToken = next(tokens)
-    if (closeBraceToken.tokenType != TokenType.closeBrace):
+    close_brace_token = next(tokens)
+    if (close_brace_token.tokenType != TokenType.close_brace):
         raise "} expected"
 
     return node
 
 
-def parseStatement(tokens):
+def parse_statement(tokens):
     nextToken = tokens.peek()
 
-    if (nextToken.tokenType == TokenType.returnKeyword):
+    if (nextToken.tokenType == TokenType.return_keyword):
         token = next(tokens)
         node = ReturnNode(token.value)
 
-        node.left = parseExpression(tokens)
+        node.left = parse_expression(tokens)
 
         token = next(tokens)
-        if (token.tokenType != TokenType.semiColon):
+        if (token.tokenType != TokenType.semi_colon):
             raise "; expected after returnKeyword"
-    elif (nextToken.tokenType == TokenType.intKeyword):
+
+    else:
+        node = parse_expression(tokens)
+
+        token = next(tokens)
+        if (token.tokenType != TokenType.semi_colon):
+            raise "; expected after assignment"
+
+    return node
+
+
+def parse_declaration(tokens):
+    if (nextToken.tokenType == TokenType.int_keyword):
         token = next(tokens)  # int
         token = next(tokens)  # id
         node = DeclarationNode(token.value)
@@ -69,100 +81,96 @@ def parseStatement(tokens):
         variables[token.value] = token.value
         if (nextToken.tokenType == TokenType.assignment):
             token = next(tokens)
-            node.left = parseExpression(tokens)
+            node.left = parse_expression(tokens)
 
         token = next(tokens)
-        if (token.tokenType != TokenType.semiColon):
+        if (token.tokenType != TokenType.semi_colon):
             raise "; expected after int"
     else:
-        node = parseExpression(tokens)
-
-        token = next(tokens)
-        if (token.tokenType != TokenType.semiColon):
-            raise "; expected after assignment"
+        raise 'wrong declaraion'
 
     return node
 
 
-def parseExpression(tokens):
+def parse_expression(tokens):
     variable = next(tokens)
-    nextToken = tokens.peek()
-    if (variable.tokenType == TokenType.identifier and nextToken.tokenType == TokenType.assignment):
+    next_token = tokens.peek()
+    if (variable.tokenType == TokenType.identifier and next_token.tokenType == TokenType.assignment):
         node = AssignNode(variable.value)
         next(tokens)
-        node.left = parseExpression(tokens)
+        node.left = parse_expression(tokens)
         return node
     else:
         tokens.prepend(variable)
-        term = parseLogicalAndExpression(tokens)
-        nextToken = tokens.peek()
+        term = parse_logical_and_expression(tokens)
+        next_token = tokens.peek()
 
-        while nextToken.tokenType == TokenType.logicalOr:
+        while next_token.tokenType == TokenType.logical_or:
             op = next(tokens).tokenType
-            nextTerm = parseLogicalAndExpression(tokens)
-            term = parseBinaryOperator(op, term, nextTerm)
-            nextToken = tokens.peek()
+            nextTerm = parse_logical_and_expression(tokens)
+            term = parse_binary_operator(op, term, nextTerm)
+            next_token = tokens.peek()
     return term
 
 
-def parseLogicalAndExpression(tokens):
-    term = parseEqualityExpression(tokens)
+def parse_logical_and_expression(tokens):
+    term = parse_equality_expression(tokens)
     nextToken = tokens.peek()
 
-    while nextToken.tokenType == TokenType.logicalAnd:
+    while nextToken.tokenType == TokenType.logical_and:
         op = next(tokens).tokenType
-        nextTerm = parseEqualityExpression(tokens)
-        term = parseBinaryOperator(op, term, nextTerm)
+        nextTerm = parse_equality_expression(tokens)
+        term = parse_binary_operator(op, term, nextTerm)
         nextToken = tokens.peek()
     return term
 
 
-def parseEqualityExpression(tokens):
-    term = parseRelationalExpression(tokens)
-    nextToken = tokens.peek()
+def parse_equality_expression(tokens):
+    term = parse_relational_expression(tokens)
+    next_token = tokens.peek()
 
-    while nextToken.tokenType == TokenType.equal or nextToken.tokenType == TokenType.notEqual:
+    while next_token.tokenType == TokenType.equal or next_token.tokenType == TokenType.not_equal:
         op = next(tokens).tokenType
-        nextTerm = parseRelationalExpression(tokens)
-        term = parseBinaryOperator(op, term, nextTerm)
-        nextToken = tokens.peek()
+        nextTerm = parse_relational_expression(tokens)
+        term = parse_binary_operator(op, term, nextTerm)
+        next_token = tokens.peek()
     return term
 
 
-def parseRelationalExpression(tokens):
-    term = parseAdditiveExpression(tokens)
-    nextToken = tokens.peek()
+def parse_relational_expression(tokens):
+    term = parse_additive_expression(tokens)
+    next_token = tokens.peek()
 
-    while (nextToken.tokenType == TokenType.lessThan or nextToken.tokenType == TokenType.lessThanEqual or
-           nextToken.tokenType == TokenType.greaterThen or nextToken.tokenType == TokenType.greaterThanOrEqual):
+    while (next_token.tokenType == TokenType.less_than or next_token.tokenType == TokenType.less_than_equal or
+           next_token.tokenType == TokenType.greater_then or next_token.tokenType == TokenType.greater_than_or_equal):
 
         op = next(tokens).tokenType
-        nextTerm = parseAdditiveExpression(tokens)
-        term = parseBinaryOperator(op, term, nextTerm)
-        nextToken = tokens.peek()
+        nextTerm = parse_additive_expression(tokens)
+        term = parse_binary_operator(op, term, nextTerm)
+        next_token = tokens.peek()
     return term
 
 
-def parseAdditiveExpression(tokens):
-    term = parseTerm(tokens)
-    nextToken = tokens.peek()
+def parse_additive_expression(tokens):
+    term = parse_term(tokens)
+    next_token = tokens.peek()
 
-    while nextToken.tokenType == TokenType.addition or nextToken.tokenType == TokenType.negation:
+    while next_token.tokenType == TokenType.addition or next_token.tokenType == TokenType.negation:
         op = next(tokens).tokenType
-        nextTerm = parseTerm(tokens)
-        term = parseBinaryOperator(op, term, nextTerm)
-        nextToken = tokens.peek()
+        nextTerm = parse_term(tokens)
+        term = parse_binary_operator(op, term, nextTerm)
+        next_token = tokens.peek()
     return term
 
 
-def parseBinaryOperator(op, term, nextTerm):
+def parse_binary_operator(op, term, nextTerm):
     node = BinaryOperatorNode(op)
     node.left = term
     node.right = nextTerm
     return node
 
 
-def parseUnaryOperator(op, term):
+def parse_unary_operator(op, term):
     node = UnaryOperatorNode(op.tokenType)
     node.left = term
     return node
@@ -173,56 +181,56 @@ def parseIntegerLiteral(literal):
     return node
 
 
-def parseTerm(tokens):
-    term = parseFactor(tokens)
+def parse_term(tokens):
+    term = parse_factor(tokens)
     nextToken = tokens.peek()
 
     while nextToken.tokenType == TokenType.multiplication or nextToken.tokenType == TokenType.division:
         op = next(tokens).tokenType
-        nextTerm = parseFactor(tokens)
-        term = parseBinaryOperator(op, term, nextTerm)
+        nextTerm = parse_factor(tokens)
+        term = parse_binary_operator(op, term, nextTerm)
         nextToken = tokens.peek()
 
     return term
 
 
-def parseFactor(tokens):
+def parse_factor(tokens):
     token = next(tokens)
-    if token.tokenType == TokenType.openParenthesis:
+    if token.tokenType == TokenType.open_parenthesis:
         # <factor> ::= "(" <exp> ")"
-        exp = parseExpression(tokens)  # parse expression inside parens
-        if next(tokens).tokenType != TokenType.closeParenthesis:  # make sure parens are balanced
+        exp = parse_expression(tokens)  # parse expression inside parens
+        if next(tokens).tokenType != TokenType.close_parenthesis:  # make sure parens are balanced
             raise ') expected'
         return exp
-    elif isUnaryOperator(token):
+    elif is_unary_operator(token):
         # <factor> ::= <unary_op> <factor>
-        factor = parseFactor(tokens)
-        return parseUnaryOperator(token, factor)
-    elif token.tokenType == TokenType.integerLiteral:
+        factor = parse_factor(tokens)
+        return parse_unary_operator(token, factor)
+    elif token.tokenType == TokenType.integer_literal:
         # <factor> ::= <int>
         return parseIntegerLiteral(token)
     elif token.tokenType == TokenType.identifier:
         # <factor> ::= <int>
-        return parseVariable(token)
+        return parse_variable(token)
     else:
         raise '??????????'
 
 
-def parseVariable(variable):
+def parse_variable(variable):
     node = VariableNode(variable.value)
     return node
 
 
-def isUnaryOperator(token):
-    return token.tokenType == TokenType.negation or token.tokenType == TokenType.bitwiseComplement or token.tokenType == TokenType.logicalNegation
+def is_unary_operator(token):
+    return token.tokenType == TokenType.negation or token.tokenType == TokenType.bitwise_complement or token.tokenType == TokenType.logical_negation
 
 
-def isBinaryOperator(token):
+def is_binary_operator(token):
     return token.tokenType == TokenType.addition or token.tokenType == TokenType.multiplication or token.tokenType == TokenType.division
 
 
-def parseTokens(tokens):
-    tree = parseProgram(tokens)
+def parse_tokens(tokens):
+    tree = parse_program(tokens)
     return  (tree, variables)
 
 

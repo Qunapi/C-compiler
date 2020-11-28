@@ -1,14 +1,14 @@
-clauseLabelNumber = 0
-clauseEndNumber = 0
+clause_label_number = 0
+clause_end_number = 0
 
-def createClauseLabel():
-    global clauseLabelNumber
-    result = f"clause_{clauseLabelNumber}"
-    clauseLabelNumber += 1
+def create_clause_label():
+    global clause_label_number
+    result = f"clause_{clause_label_number}"
+    clause_label_number += 1
     return result
 
-def createEndLabel():
-    global clauseEndNumber
-    result = f"end_{clauseEndNumber}"
-    clauseEndNumber += 1
+def create_end_label():
+    global clause_end_number
+    result = f"end_{clause_end_number}"
+    clause_end_number += 1
     return result

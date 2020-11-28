@@ -1,6 +1,6 @@
 from os import listdir, system
-from lexer import createTokens
-from parser import parseTokens
+from lexer import create_tokens
+from parser import parse_tokens
 from generator import generate
 from pathlib import Path
 from comparison import compare
@@ -21,21 +21,21 @@ for file in files:
     f = open(f"./tests/{file}", "r")
     text = f.read()
 
-    fileName = Path(file).with_suffix('')
+    file_name = Path(file).with_suffix('')
 
     print(f"Processing {file}")
-    tokens = createTokens(text)
-    tokensIterator = peekable(tokens)
-    tree, variables = parseTokens(tokensIterator)
+    tokens = create_tokens(text)
+    tokens_iterator = peekable(tokens)
+    tree, variables = parse_tokens(tokens_iterator)
 
     result = generate(tree, variables)
 
-    resultFile = open(f"./results/{fileName}.s", "w")
+    result_file = open(f"./results/{file_name}.s", "w")
 
-    resultFile.write(result)
-    resultFile.close()
+    result_file.write(result)
+    result_file.close()
 
-    system(f'gcc ./results/{fileName}.s -o ./compiled/{fileName}.c')
+    system(f'gcc ./results/{file_name}.s -o ./compiled/{file_name}.c')
     system(f'gcc -w ./tests/{file}  -o ./compiledWithGCC/{file}')
 
 
