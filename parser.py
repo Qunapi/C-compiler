@@ -1,8 +1,7 @@
 from lexer import create_tokens, Token, TokenType
-from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node, VariableNode, DeclarationNode, AssignNode, IfNode, ConditionalNode
+from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node, VariableNode, DeclarationNode, AssignNode, IfNode, ConditionalNode, CompoundNode
 
 
-variables = {}
 
 
 def parse_program(tokens):
@@ -37,10 +36,10 @@ def parse_function(tokens):
         raise "{ expected"
 
     next_token = tokens.peek()
-    node.block_items = []
+    node.statements = []
 
     while next_token.token_type != TokenType.close_brace:
-        node.block_items.append(parse_block_item(tokens))
+        node.statements.append(parse_block_item(tokens))
         next_token = tokens.peek()
 
     close_brace_token = next(tokens)
@@ -74,7 +73,7 @@ def parse_statement(tokens):
         token = next(tokens)
         if (token.token_type != TokenType.close_parenthesis):
             raise ') expected'
-        
+
         node.true_branch = parse_statement(tokens)
 
         next_token = tokens.peek()
@@ -82,12 +81,45 @@ def parse_statement(tokens):
             next(tokens)
             node.false_branch = parse_statement(tokens)
 
+    elif (next_token.token_type == TokenType.open_brace):
+        node = parse_compound_block(tokens)
     else:
         node = parse_expression(tokens)
 
         token = next(tokens)
         if (token.token_type != TokenType.semi_colon):
             raise "; expected after assignment"
+
+    return node
+
+
+def parse_compound_block(tokens):
+    node = CompoundNode()
+
+    open_brace_token = next(tokens)
+    if (open_brace_token.token_type != TokenType.open_brace):
+        raise "{ expected"
+
+    next_token = tokens.peek()
+    node.statements = []
+
+    while next_token.token_type != TokenType.close_brace:
+        node.statements.append(parse_block_item(tokens))
+        next_token = tokens.peek()
+
+    close_brace_token = next(tokens)
+    if (close_brace_token.token_type != TokenType.close_brace):
+        raise "} expected"
+
+    return node
+
+
+def parse_block_item(tokens):
+    next_token = tokens.peek()
+    if (next_token.token_type == TokenType.int_keyword):
+        node = parse_declaration(tokens)
+    else:
+        node = parse_statement(tokens)
 
     return node
 
@@ -99,7 +131,6 @@ def parse_declaration(tokens):
         token = next(tokens)  # id
         node = DeclarationNode(token.value)
         next_token = tokens.peek()
-        variables[token.value] = token.value
         if (next_token.token_type == TokenType.assignment):
             token = next(tokens)
             node.left = parse_expression(tokens)
@@ -112,14 +143,6 @@ def parse_declaration(tokens):
 
     return node
 
-def parse_block_item(tokens):
-    next_token = tokens.peek()
-    if (next_token.token_type == TokenType.int_keyword):
-        node = parse_declaration(tokens)
-    else:
-        node = parse_statement(tokens)
-
-    return node
 
 def parse_expression(tokens):
     variable = next(tokens)
@@ -135,6 +158,7 @@ def parse_expression(tokens):
 
     return node
 
+
 def parse_conditional_expression(tokens):
     node = parse_logical_or_expression(tokens)
     next_token = tokens.peek()
@@ -149,8 +173,9 @@ def parse_conditional_expression(tokens):
         if (token.token_type != TokenType.colon):
             raise ': expected'
         node.false_branch = parse_conditional_expression(tokens)
-    
+
     return node
+
 
 def parse_logical_or_expression(tokens):
     term = parse_logical_and_expression(tokens)
@@ -161,7 +186,7 @@ def parse_logical_or_expression(tokens):
         nextTerm = parse_logical_and_expression(tokens)
         term = parse_binary_operator(op, term, nextTerm)
         next_token = tokens.peek()
-        
+
     return term
 
 
@@ -249,20 +274,16 @@ def parse_term(tokens):
 def parse_factor(tokens):
     token = next(tokens)
     if token.token_type == TokenType.open_parenthesis:
-        # <factor> ::= "(" <exp> ")"
-        exp = parse_expression(tokens)  # parse expression inside parens
-        if next(tokens).token_type != TokenType.close_parenthesis:  # make sure parens are balanced
+        exp = parse_expression(tokens)  
+        if next(tokens).token_type != TokenType.close_parenthesis: 
             raise ') expected'
         return exp
     elif is_unary_operator(token):
-        # <factor> ::= <unary_op> <factor>
         factor = parse_factor(tokens)
         return parse_unary_operator(token, factor)
     elif token.token_type == TokenType.integer_literal:
-        # <factor> ::= <int>
         return parseIntegerLiteral(token)
     elif token.token_type == TokenType.identifier:
-        # <factor> ::= <int>
         return parse_variable(token)
     else:
         raise '??????????'
@@ -283,7 +304,7 @@ def is_binary_operator(token):
 
 def parse_tokens(tokens):
     tree = parse_program(tokens)
-    return (tree, variables)
+    return tree
 
 
 COUNT = [10]
@@ -313,8 +334,8 @@ def print2DUtil(root, space=0):
     if (hasattr(root, 'value')):
         print(root.value)
 
-    if (hasattr(root, 'block_items')):
-        for statement in root.block_items:
+    if (hasattr(root, 'statements')):
+        for statement in root.statements:
             print2DUtil(statement, space)
 
     if (hasattr(root, 'condition')):

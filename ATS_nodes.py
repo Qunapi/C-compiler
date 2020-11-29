@@ -5,6 +5,8 @@ class ProgramNode:
 class FunctionNode:
     def __init__(self, name):
         self.name = name
+        self.variables = []
+        self.stack_size =[]
 
 
 class ConstantNode:
@@ -56,3 +58,7 @@ class ConditionalNode:
         self.true_branch = None
         self.false_branch = None
         self.condition = None
+
+class CompoundNode:
+    def __init__(self):
+        self.statements = []

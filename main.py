@@ -26,9 +26,9 @@ for file in files:
     print(f"Processing {file}")
     tokens = create_tokens(text)
     tokens_iterator = peekable(tokens)
-    tree, variables = parse_tokens(tokens_iterator)
+    tree = parse_tokens(tokens_iterator)
 
-    result = generate(tree, variables)
+    result = generate(tree)
 
     result_file = open(f"./results/{file_name}.s", "w")
 
@@ -42,7 +42,7 @@ for file in files:
 print ("GCC start")
 subprocess.call(['sh', './scripts/echoGCCresults.sh']) 
 
-print ("main start")
+print ("self-compiled start")
 subprocess.call(['sh', './scripts/echoResults.sh']) 
 
 compare()
