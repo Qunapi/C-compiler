@@ -2,6 +2,10 @@
 
 C to asm compiler written in python
 
+## How to setup
+
+pip3 install -r requirements.txt
+
 ## How to run
 
 python3 main.py
