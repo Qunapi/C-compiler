@@ -1,12 +1,11 @@
 from os import listdir, system
 from lexer import create_tokens
-from parser import parse_tokens
+from compiler_parser import parse_tokens
 from generator import generate
 from pathlib import Path
 from comparison import compare
 from more_itertools import peekable
 import subprocess
-
 
 
 files = listdir("./tests")
@@ -39,10 +38,10 @@ for file in files:
     system(f'gcc -w ./tests/{file}  -o ./compiledWithGCC/{file}')
 
 
-print ("GCC start")
-subprocess.call(['sh', './scripts/echoGCCresults.sh']) 
+print("GCC start")
+subprocess.call(['sh', './scripts/echoGCCresults.sh'])
 
-print ("self-compiled start")
-subprocess.call(['sh', './scripts/echoResults.sh']) 
+print("self-compiled start")
+subprocess.call(['sh', './scripts/echoResults.sh'])
 
 compare()

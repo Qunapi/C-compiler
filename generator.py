@@ -1,5 +1,4 @@
 from lexer import create_tokens, Token, TokenType
-from parser import parse_tokens
 from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node, VariableNode, DeclarationNode, AssignNode, IfNode, ConditionalNode, CompoundNode, NullNode,  ForNode, ForDeclarationNode, WhileNode, DoWhileNode, BreakNode, ContinueNode, FunctionCallNode
 from helpers import create_clause_label, create_end_label, create_false_branch_label, create_post_conditional_number, create_clause_while_start_number, create_clause_while_end_number, create_clause_for_start_number, create_clause_for_end_number, create_clause_for_post_expression_number
 import copy
