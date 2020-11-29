@@ -36,6 +36,7 @@ class TokenType:
     continue_keyword = "continue"
     identifier = "[a-zA-Z]\\w*"
     mod = "%"
+    comma = ","
 
 
 class Token:
@@ -59,7 +60,7 @@ def create_tokens(text):
         f"|{TokenType.logical_negation}|{TokenType.assignment}"
         f"|{TokenType.if_keyword}|{TokenType.else_keyword}|{TokenType.colon}|{TokenType.question_mark}"
         f"|{TokenType.for_keyword}|{TokenType.while_keyword}|{TokenType.do_keyword}|{TokenType.break_keyword}"
-        f"|{TokenType.continue_keyword}|{TokenType.identifier}|{TokenType.mod}", text)
+        f"|{TokenType.continue_keyword}|{TokenType.identifier}|{TokenType.mod}|{TokenType.comma}", text)
 
     def map_token_to_type(token):
         if (re.match(TokenType.open_brace, token)):
@@ -130,6 +131,8 @@ def create_tokens(text):
             return Token(token, TokenType.identifier)
         elif (re.match(TokenType.mod, token)):
             return Token(token, TokenType.mod)
+        elif (re.match(TokenType.comma, token)):
+            return Token(token, TokenType.comma)
 
         else:
             raise "invalid token"

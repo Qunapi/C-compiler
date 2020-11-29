@@ -1,11 +1,25 @@
 from lexer import create_tokens, Token, TokenType
-from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node, VariableNode, DeclarationNode, AssignNode, IfNode, ConditionalNode, CompoundNode, NullNode,  ForNode, ForDeclarationNode, WhileNode, DoWhileNode, BreakNode, ContinueNode
+from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node, VariableNode, DeclarationNode, AssignNode, IfNode, ConditionalNode, CompoundNode, NullNode,  ForNode, ForDeclarationNode, WhileNode, DoWhileNode, BreakNode, ContinueNode, FunctionCallNode
 
 
 def parse_program(tokens):
     tree = ProgramNode()
-    tree.left = parse_function(tokens)
-    # print2DUtil(tree)
+    function = parse_function(tokens)
+    tree.statements.append(function)
+
+    try:
+        next_token = tokens.peek()
+    except:
+        return tree
+
+    while(next_token.token_type == TokenType.int_keyword):
+        function = parse_function(tokens)
+        tree.statements.append(function)
+        try:
+            next_token = tokens.peek()
+        except:
+            return tree
+
     return tree
 
 
@@ -25,12 +39,37 @@ def parse_function(tokens):
     if (open_parenthesis.token_type != TokenType.open_parenthesis):
         raise "( expected"
 
+    next_token = tokens.peek()
+
+    if (next_token.token_type != TokenType.close_parenthesis):
+        token = next(tokens)
+        if (token.token_type != TokenType.int_keyword):
+            raise "int keyword expected"
+        token = next(tokens)
+        node.variables.append(token.value)
+        next_token = tokens.peek()
+
+        while (next_token.token_type != TokenType.close_parenthesis):
+            token = next(tokens)
+            if (token.token_type != TokenType.comma):
+                raise ",  expected"
+            token = next(tokens)
+            if (token.token_type != TokenType.int_keyword):
+                raise "int keyword expected"
+            token = next(tokens)
+            node.variables.append(token.value)
+            next_token = tokens.peek()
+
     close_parenthesis = next(tokens)
     if (close_parenthesis.token_type != TokenType.close_parenthesis):
         raise ") expected"
 
-    open_brace_token = next(tokens)
-    if (open_brace_token.token_type != TokenType.open_brace):
+    next_token = next(tokens)
+
+    if (next_token.token_type == TokenType.semi_colon):
+        return NullNode()
+
+    if (next_token.token_type != TokenType.open_brace):
         raise "{ expected"
 
     next_token = tokens.peek()
@@ -47,9 +86,41 @@ def parse_function(tokens):
     return node
 
 
-def parse_statement(tokens):
+def parse_function_call(tokens):
+    token = next(tokens)
+    if (token.token_type != TokenType.identifier):
+        raise 'Identifier expected'
+    node = FunctionCallNode()
+    node.name = token.value
+
+    open_parenthesis = next(tokens)
+    if (open_parenthesis.token_type != TokenType.open_parenthesis):
+        raise "( expected"
+
     next_token = tokens.peek()
 
+    if (next_token.token_type != TokenType.close_parenthesis):
+        param = parse_expression(tokens)
+        node.args.append(param)
+
+        next_token = tokens.peek()
+        while (next_token.token_type != TokenType.close_parenthesis):
+            token = next(tokens)
+            if (token.token_type != TokenType.comma):
+                raise ",  expected"
+            param = parse_expression(tokens)
+            node.args.append(param)
+            next_token = tokens.peek()
+
+    close_parenthesis = next(tokens)
+    if (close_parenthesis.token_type != TokenType.close_parenthesis):
+        raise ") expected"
+
+    return node
+
+
+def parse_statement(tokens):
+    next_token = tokens.peek()
     if (next_token.token_type == TokenType.return_keyword):
         token = next(tokens)
         node = ReturnNode(token.value)
@@ -310,15 +381,15 @@ def parse_option_expression(tokens):
 
 
 def parse_expression(tokens):
-    variable = next(tokens)
+    identifier = next(tokens)
     next_token = tokens.peek()
-    if (variable.token_type == TokenType.identifier and next_token.token_type == TokenType.assignment):
-        node = AssignNode(variable.value)
+    if (identifier.token_type == TokenType.identifier and next_token.token_type == TokenType.assignment):
+        node = AssignNode(identifier.value)
         next(tokens)
         node.left = parse_expression(tokens)
         return node
     else:
-        tokens.prepend(variable)
+        tokens.prepend(identifier)
         node = parse_conditional_expression(tokens)
 
     return node
@@ -438,11 +509,16 @@ def parse_term(tokens):
 
 def parse_factor(tokens):
     token = next(tokens)
+    next_token = tokens.peek()
     if token.token_type == TokenType.open_parenthesis:
         exp = parse_expression(tokens)
         if next(tokens).token_type != TokenType.close_parenthesis:
             raise ') expected'
         return exp
+    elif (token.token_type == TokenType.identifier and next_token.token_type == TokenType.open_parenthesis):
+        tokens.prepend(token)
+        node = parse_function_call(tokens)
+        return node
     elif is_unary_operator(token):
         factor = parse_factor(tokens)
         return parse_unary_operator(token, factor)
@@ -470,48 +546,3 @@ def is_binary_operator(token):
 def parse_tokens(tokens):
     tree = parse_program(tokens)
     return tree
-
-
-COUNT = [10]
-
-
-def print2DUtil(root, space=0):
-    # Base case
-    if (root == None):
-        return
-
-    # Increase distance between levels
-    space += COUNT[0]
-
-    # Process right child first
-    if (hasattr(root, 'right')):
-        print2DUtil(root.right, space)
-
-    # Print current node after space
-    # count
-    print()
-    for i in range(COUNT[0], space):
-        print(end=" ")
-
-    if (hasattr(root, 'name')):
-        print(root.name)
-
-    if (hasattr(root, 'value')):
-        print(root.value)
-
-    if (hasattr(root, 'statements')):
-        for statement in root.statements:
-            print2DUtil(statement, space)
-
-    if (hasattr(root, 'condition')):
-        print('if')
-        print2DUtil(root.condition, space)
-
-    if (hasattr(root, 'true_branch')):
-        print2DUtil(root.true_branch, space)
-
-    if (hasattr(root, 'false_branch')):
-        print2DUtil(root.false_branch, space)
-
-    if (hasattr(root, 'left')):
-        print2DUtil(root.left, space)

@@ -1,6 +1,6 @@
 from lexer import create_tokens, Token, TokenType
 from parser import parse_tokens
-from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node, VariableNode, DeclarationNode, AssignNode, IfNode, ConditionalNode, CompoundNode, NullNode,  ForNode, ForDeclarationNode, WhileNode, DoWhileNode, BreakNode, ContinueNode
+from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node, VariableNode, DeclarationNode, AssignNode, IfNode, ConditionalNode, CompoundNode, NullNode,  ForNode, ForDeclarationNode, WhileNode, DoWhileNode, BreakNode, ContinueNode, FunctionCallNode
 from helpers import create_clause_label, create_end_label, create_false_branch_label, create_post_conditional_number, create_clause_while_start_number, create_clause_while_end_number, create_clause_for_start_number, create_clause_for_end_number, create_clause_for_post_expression_number
 import copy
 
@@ -13,15 +13,16 @@ class Labels:
 
 
 class Context:
-    def __init__(self, variables_data, labels, stack_index, current_scope):
+    def __init__(self, variables_data, labels, stack_index, current_scope, function_name):
         self.variables_data = variables_data
         self.labels = labels
         self.stack_index = stack_index
         self.current_scope = current_scope
+        self.function_name = function_name
 
 
 def generate(tree):
-    context = Context({}, Labels(None, None, None), 0, None)
+    context = Context({}, Labels(None, None, None), 0, None, None)
 
     result = ''
     result += process_node(tree, result, context)
@@ -33,7 +34,8 @@ def process_node(node, result, context):
     context
     if isinstance(node, ProgramNode):
         result += '    .globl	_main\n'
-        result = process_node(node.left, result, context)
+        for statement in node.statements:
+            result = process_node(statement, result, context)
     elif isinstance(node, FunctionNode):
         result = process_function(node, result, context)
     else:
@@ -45,9 +47,9 @@ def process_node(node, result, context):
 def generate_declaration(node, result, context):
 
     if (context.current_scope == None):
-        context.variables_data[node.name] = context.stack_index
+        context.variables_data[node.name] = f"{context.stack_index}(%rbp)"
     else:
-        context.current_scope[node.name] = context.stack_index
+        context.current_scope[node.name] = f"{context.stack_index}(%rbp)"
 
     result += f"#Declaration start\n"
     result += f"    push %rax\n"
@@ -63,28 +65,41 @@ def generate_declaration(node, result, context):
 
 
 def process_function(node, result, context):
-    funcName = node.name
-    result += f"_{funcName}:\n"
+
+    new_context = copy.deepcopy(context)
+
+    function_name = node.name
+
+    new_context.function_name = function_name
+
+    result += f"_{function_name}:\n"
     result += f"    push %rbp\n"
     result += f"    movq %rsp, %rbp\n"
     result += f"    movq $0, %rax\n\n"
 
-    context.variables_data = {}
-    context.stack_index = -8
+    variables = node.variables
+    if (len(variables) > 0):
+        new_context.variables_data[variables[0]] = "%rdi"
+    if (len(variables) > 1):
+        new_context.variables_data[variables[1]] = "%rsi"
+    if (len(variables) > 2):
+        new_context.variables_data[variables[2]] = "%rdx"
+
+    new_context.stack_index = -8
 
     for statement in node.statements:
         if isinstance(statement, DeclarationNode):
-            result, context = generate_declaration(
-                statement, result, context)
+            result, new_context = generate_declaration(
+                statement, result, new_context)
 
         else:
-            result, context = generate_statement(
-                statement, result,  context)
+            result, new_context = generate_statement(
+                statement, result,  new_context)
 
-    result += f"\nend_label:\n"
+    result += f"\nend_label_{new_context.function_name}:\n"
     result += f"    movq %rbp, %rsp\n"
     result += f"    pop %rbp\n"
-    result += f"    ret"
+    result += f"    ret\n"
 
     return result
 
@@ -105,7 +120,6 @@ def generate_block(block, result, context):
 
     bytes_to_deallocate = 8 * len(new_context.current_scope)
     result += f"    add ${bytes_to_deallocate}, %rsp\n"
-    #stack_index = new_context.stack_index + 8 * len(new_context.current_scope)
     return result, context
 
 
@@ -299,23 +313,66 @@ def generate_statement(block, result, context):
 def process_expression(node, result, context):
     if isinstance(node, ConstantNode):
         result += f"    movq ${node.value}, %rax\n"
+    elif (isinstance(node, FunctionCallNode)):
+        args = node.args
+
+        result += f"    push %rdi\n"
+        result += f"    push %rsi\n"
+        result += f"    push %rdx\n"
+
+        result += f"\n# Align start part start\n\n"
+        result += f"    mov %rsp, %rax\n"
+        n = (8*(len(args)))
+        result += f"    sub ${n}, %rax\n"
+        result += f"    xor %rdx, %rdx\n"
+        result += f"    mov $16, %rcx\n"
+        result += f"    idiv %rcx\n"
+        result += f"    sub %rdx, %rsp\n"
+        result += f"    push %rdx\n"
+        result += f"\n# Align start part end\n\n"
+
+        if (len(args) > 0):
+            result += f"\n# Put first argument\n\n"
+            result = process_expression(args[0], result,  context)
+            result += "    movq %rax, %rdi\n"
+        if (len(args) > 1):
+            result += f"\n# Put second argument\n\n"
+            result = process_expression(args[1], result,  context)
+            result += "    movq %rax, %rsi\n"
+        if (len(args) > 2):
+            result += f"\n# Put third argument\n\n"
+            result = process_expression(args[2], result,  context)
+            result += "    movq %rax, %rdx\n"
+        # @see https://courses.cs.washington.edu/courses/cse378/10au/sections/Section1_recap.pdf for 3+ args
+
+        result += f"    callq _{node.name}\n"
+
+        result += f"\n# Align end part start\n\n"
+        result += f"    pop %rdx\n"
+        result += f"    add %rdx, %rsp\n"
+        result += f"\n# Align end part end\n\n"
+
+        result += f"    pop %rdx\n"
+        result += f"    pop %rsi\n"
+        result += f"    pop %rdi\n"
+
     elif isinstance(node, BreakNode):
         result += f"    jmp {context.labels.end_label}\n"
     elif isinstance(node, ContinueNode):
         result += f"    jmp {context.labels.post_expression_label}\n"
     elif isinstance(node, VariableNode):
-        offset = context.variables_data[node.name]
-        result += f"    movq {offset}(%rbp), %rax\n"
+        variable = context.variables_data[node.name]
+        result += f"    movq {variable}, %rax\n"
     elif isinstance(node, ReturnNode):
         if node.name == TokenType.return_keyword:
             result = process_expression(
                 node.left, result, context)
-            result += "    jmp end_label\n"
+            result += f"    jmp end_label_{context.function_name}\n"
     elif isinstance(node, AssignNode):
         result += "\n#Assignment start\n\n"
         result = process_expression(node.left, result, context)
-        offset = context.variables_data[node.name]
-        result += f"    movq %rax, {offset}(%rbp)\n"
+        variable = context.variables_data[node.name]
+        result += f"    movq %rax, {variable}\n"
 
         result += "\n#Assignment end\n\n"
 
