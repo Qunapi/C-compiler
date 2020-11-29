@@ -1,7 +1,5 @@
 from lexer import create_tokens, Token, TokenType
-from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node, VariableNode, DeclarationNode, AssignNode, IfNode, ConditionalNode, CompoundNode
-
-
+from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, UnaryOperatorNode, BinaryOperatorNode, Node, VariableNode, DeclarationNode, AssignNode, IfNode, ConditionalNode, CompoundNode, NullNode,  ForNode, ForDeclarationNode, WhileNode, DoWhileNode, BreakNode, ContinueNode
 
 
 def parse_program(tokens):
@@ -56,11 +54,13 @@ def parse_statement(tokens):
         token = next(tokens)
         node = ReturnNode(token.value)
 
-        node.left = parse_expression(tokens)
+        node.left = parse_option_expression(tokens)
 
         token = next(tokens)
         if (token.token_type != TokenType.semi_colon):
             raise "; expected after returnKeyword"
+        return node
+
     elif (next_token.token_type == TokenType.if_keyword):
         node = IfNode()
         next(tokens)
@@ -74,21 +74,178 @@ def parse_statement(tokens):
         if (token.token_type != TokenType.close_parenthesis):
             raise ') expected'
 
-        node.true_branch = parse_statement(tokens)
+        true_branch = parse_statement(tokens)
+
+        node.true_branch = true_branch
 
         next_token = tokens.peek()
         if (next_token.token_type == TokenType.else_keyword):
             next(tokens)
             node.false_branch = parse_statement(tokens)
+        return node
 
     elif (next_token.token_type == TokenType.open_brace):
         node = parse_compound_block(tokens)
+        return node
+
+    elif (next_token.token_type == TokenType.for_keyword):
+        for_token = next(tokens)
+        parenthesis_token = next(tokens)
+        next_token = tokens.peek()
+        if (next_token.token_type == TokenType.int_keyword):
+            tokens.prepend(parenthesis_token)
+            tokens.prepend(for_token)
+            node = parse_for_declaration(tokens)
+            return node
+        tokens.prepend(parenthesis_token)
+        tokens.prepend(for_token)
+        next_token = tokens.peek()
+
+    if (next_token.token_type == TokenType.for_keyword):
+        node = parse_for(tokens)
+
+    elif (next_token.token_type == TokenType.while_keyword):
+        node = parse_while(tokens)
+
+    elif (next_token.token_type == TokenType.do_keyword):
+        node = parse_do_while(tokens)
+
+    elif (next_token.token_type == TokenType.break_keyword):
+        node = parse_break(tokens)
+
+    elif (next_token.token_type == TokenType.continue_keyword):
+        node = parse_continue(tokens)
+
     else:
-        node = parse_expression(tokens)
+        node = parse_option_expression(tokens)
 
         token = next(tokens)
         if (token.token_type != TokenType.semi_colon):
             raise "; expected after assignment"
+
+    return node
+
+
+def parse_for(tokens):
+    node = ForNode()
+    token = next(tokens)
+    if (token.token_type != TokenType.for_keyword):
+        raise "for expected"
+    token = next(tokens)
+    if (token.token_type != TokenType.open_parenthesis):
+        raise "( expected"
+
+    node.initial_expression = parse_option_expression(tokens)
+
+    token = next(tokens)
+    if (token.token_type != TokenType.semi_colon):
+        raise "; expected after assignment"
+
+    node.condition = parse_option_expression(tokens)
+    token = next(tokens)
+    if (token.token_type != TokenType.semi_colon):
+        raise "; expected after expression"
+
+    node.post_expression = parse_option_expression(tokens)
+
+    token = next(tokens)
+    if (token.token_type != TokenType.close_parenthesis):
+        raise ") expected"
+
+    node.body = parse_statement(tokens)
+
+    return node
+
+
+def parse_for_declaration(tokens):
+    node = ForDeclarationNode()
+    token = next(tokens)
+    if (token.token_type != TokenType.for_keyword):
+        raise "for expected"
+    token = next(tokens)
+    if (token.token_type != TokenType.open_parenthesis):
+        raise "( expected"
+
+    node.initial_expression = parse_declaration(tokens)
+    node.condition = parse_option_expression(tokens)
+
+    token = next(tokens)
+    if (token.token_type != TokenType.semi_colon):
+        raise "; expected after expression"
+
+    node.post_expression = parse_option_expression(tokens)
+
+    token = next(tokens)
+    if (token.token_type != TokenType.close_parenthesis):
+        raise ") expected"
+
+    node.body = parse_statement(tokens)
+
+    return node
+
+
+def parse_while(tokens):
+    node = WhileNode()
+    token = next(tokens)
+    if (token.token_type != TokenType.while_keyword):
+        raise "while expected"
+    token = next(tokens)
+    if (token.token_type != TokenType.open_parenthesis):
+        raise "( expected"
+
+    node.condition = parse_expression(tokens)
+
+    token = next(tokens)
+    if (token.token_type != TokenType.close_parenthesis):
+        raise ") expected"
+
+    node.body = parse_statement(tokens)
+
+    return node
+
+
+def parse_do_while(tokens):
+    node = DoWhileNode()
+    token = next(tokens)
+
+    if (token.token_type != TokenType.do_keyword):
+        raise "do expected"
+
+    node.body = parse_statement(tokens)
+
+    token = next(tokens)
+    if (token.token_type != TokenType.while_keyword):
+        raise "while expected"
+
+    node.condition = parse_expression(tokens)
+
+    return node
+
+
+def parse_break(tokens):
+    token = next(tokens)
+    if (token.token_type != TokenType.break_keyword):
+        raise "break expected"
+
+    node = BreakNode()
+
+    token = next(tokens)
+    if (token.token_type != TokenType.semi_colon):
+        raise "; expected after break"
+
+    return node
+
+
+def parse_continue(tokens):
+    token = next(tokens)
+    if (token.token_type != TokenType.continue_keyword):
+        raise "continue expected"
+
+    node = ContinueNode()
+
+    token = next(tokens)
+    if (token.token_type != TokenType.semi_colon):
+        raise "; expected after continue"
 
     return node
 
@@ -142,6 +299,14 @@ def parse_declaration(tokens):
         raise 'wrong declaraion'
 
     return node
+
+
+def parse_option_expression(tokens):
+    next_token = tokens.peek()
+    if (next_token.token_type == TokenType.semi_colon or next_token.token_type == TokenType.close_parenthesis):
+        return NullNode()
+    else:
+        return parse_expression(tokens)
 
 
 def parse_expression(tokens):
@@ -232,7 +397,7 @@ def parse_additive_expression(tokens):
     term = parse_term(tokens)
     next_token = tokens.peek()
 
-    while next_token.token_type == TokenType.addition or next_token.token_type == TokenType.negation:
+    while next_token.token_type == TokenType.addition or next_token.token_type == TokenType.negation or next_token.token_type == TokenType.mod:
         op = next(tokens).token_type
         nextTerm = parse_term(tokens)
         term = parse_binary_operator(op, term, nextTerm)
@@ -274,8 +439,8 @@ def parse_term(tokens):
 def parse_factor(tokens):
     token = next(tokens)
     if token.token_type == TokenType.open_parenthesis:
-        exp = parse_expression(tokens)  
-        if next(tokens).token_type != TokenType.close_parenthesis: 
+        exp = parse_expression(tokens)
+        if next(tokens).token_type != TokenType.close_parenthesis:
             raise ') expected'
         return exp
     elif is_unary_operator(token):
@@ -299,7 +464,7 @@ def is_unary_operator(token):
 
 
 def is_binary_operator(token):
-    return token.token_type == TokenType.addition or token.token_type == TokenType.multiplication or token.token_type == TokenType.division
+    return token.token_type == TokenType.addition or token.token_type == TokenType.multiplication or token.token_type == TokenType.division or token.token_type == TokenType.mod
 
 
 def parse_tokens(tokens):

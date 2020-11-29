@@ -62,3 +62,38 @@ class ConditionalNode:
 class CompoundNode:
     def __init__(self):
         self.statements = []
+
+class NullNode: 
+    pass
+
+class ForNode:
+    def __init__(self):
+        self.initial_expression = None
+        self.condition = None
+        self.post_expression = None
+        self.body = None
+
+class ForDeclarationNode:
+    def __init__(self):
+        self.initial_expression = None
+        self.condition = None
+        self.post_expression = None
+        self.body = None
+
+class WhileNode:
+    def __init__(self):
+        self.condition = None
+        self.body = None 
+
+
+
+class DoWhileNode:
+    def __init__(self):
+        self.body = None 
+        self.condition = None
+        
+class BreakNode:
+    pass
+
+class ContinueNode:
+    pass

@@ -29,7 +29,13 @@ class TokenType:
     else_keyword = 'else'
     colon = ":"
     question_mark = "\\?"
+    for_keyword = "for"
+    while_keyword = "while"
+    do_keyword = "do"
+    break_keyword = "break"
+    continue_keyword = "continue"
     identifier = "[a-zA-Z]\\w*"
+    mod = "%"
 
 
 class Token:
@@ -52,7 +58,8 @@ def create_tokens(text):
         f"|{TokenType.less_than_equal}|{TokenType.less_than}|{TokenType.greater_than_or_equal}|{TokenType.greater_then}"
         f"|{TokenType.logical_negation}|{TokenType.assignment}"
         f"|{TokenType.if_keyword}|{TokenType.else_keyword}|{TokenType.colon}|{TokenType.question_mark}"
-        f"|{TokenType.identifier}", text)
+        f"|{TokenType.for_keyword}|{TokenType.while_keyword}|{TokenType.do_keyword}|{TokenType.break_keyword}"
+        f"|{TokenType.continue_keyword}|{TokenType.identifier}|{TokenType.mod}", text)
 
     def map_token_to_type(token):
         if (re.match(TokenType.open_brace, token)):
@@ -109,8 +116,21 @@ def create_tokens(text):
             return Token(token, TokenType.colon)
         elif (re.match(TokenType.question_mark, token)):
             return Token(token, TokenType.question_mark)
+        elif (re.match(TokenType.for_keyword, token)):
+            return Token(token, TokenType.for_keyword)
+        elif (re.match(TokenType.while_keyword, token)):
+            return Token(token, TokenType.while_keyword)
+        elif (re.match(TokenType.do_keyword, token)):
+            return Token(token, TokenType.do_keyword)
+        elif (re.match(TokenType.break_keyword, token)):
+            return Token(token, TokenType.break_keyword)
+        elif (re.match(TokenType.continue_keyword, token)):
+            return Token(token, TokenType.continue_keyword)
         elif (re.match(TokenType.identifier, token)):
             return Token(token, TokenType.identifier)
+        elif (re.match(TokenType.mod, token)):
+            return Token(token, TokenType.mod)
+
         else:
             raise "invalid token"
 
