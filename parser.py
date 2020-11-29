@@ -4,8 +4,8 @@ from ATS_nodes import ProgramNode, FunctionNode, ReturnNode, ConstantNode, Unary
 
 def parse_program(tokens):
     tree = ProgramNode()
-    function = parse_function(tokens)
-    tree.statements.append(function)
+    top_level_item = parse_top_level_item(tokens)
+    tree.top_level_items.append(top_level_item)
 
     try:
         next_token = tokens.peek()
@@ -13,14 +13,37 @@ def parse_program(tokens):
         return tree
 
     while(next_token.token_type == TokenType.int_keyword):
-        function = parse_function(tokens)
-        tree.statements.append(function)
+        top_level_item = parse_top_level_item(tokens)
+        tree.top_level_items.append(top_level_item)
         try:
             next_token = tokens.peek()
         except:
             return tree
 
     return tree
+
+
+def parse_top_level_item(tokens):
+    intKeywordToken = next(tokens)
+    if (intKeywordToken.token_type != TokenType.int_keyword):
+        raise 'int keyword expected'
+
+    idToken = next(tokens)
+    if (idToken.token_type != TokenType.identifier):
+        raise 'id expected'
+
+    nextToken = tokens.peek()
+
+    if (nextToken.token_type == TokenType.open_parenthesis):
+        tokens.prepend(idToken)
+        tokens.prepend(intKeywordToken)
+        node = parse_function(tokens)
+    else:
+        tokens.prepend(idToken)
+        tokens.prepend(intKeywordToken)
+        node = parse_declaration(tokens)
+
+    return node
 
 
 def parse_function(tokens):

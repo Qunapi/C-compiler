@@ -19,6 +19,7 @@ class Context:
         self.stack_index = stack_index
         self.current_scope = current_scope
         self.function_name = function_name
+        self.global_variables = {}
 
 
 def generate(tree):
@@ -34,10 +35,21 @@ def process_node(node, result, context):
     context
     if isinstance(node, ProgramNode):
         result += '    .globl	_main\n'
-        for statement in node.statements:
+        for statement in node.top_level_items:
             result = process_node(statement, result, context)
+
+        result += '        .section	__DATA,__data\n'
+        # allocate global variables
+        for variable_name in context.global_variables:
+            result += f"    .globl _{variable_name}\n"
+            result += f"    .p2align 4\n"
+            result += f"_{variable_name}:\n"
+            result += f"    .long {context.global_variables[variable_name]}\n"
+
     elif isinstance(node, FunctionNode):
         result = process_function(node, result, context)
+    elif isinstance(node, DeclarationNode):
+        result = generate_declaration(node, result, context)
     else:
         result = process_expression(node, result, context)
 
@@ -46,22 +58,31 @@ def process_node(node, result, context):
 
 def generate_declaration(node, result, context):
 
-    if (context.current_scope == None):
+    if (context.stack_index == 0):
+        context.variables_data[node.name] = f"_{node.name}(%rip)"
+        if (hasattr(node, 'left')):
+            context.global_variables[node.name] = node.left.value
+        else:
+            if (not node.name in context.global_variables):
+                context.global_variables[node.name] = 0
+
+    elif (context.current_scope == None):
         context.variables_data[node.name] = f"{context.stack_index}(%rbp)"
+        context.stack_index = context.stack_index - 8
     else:
         context.current_scope[node.name] = f"{context.stack_index}(%rbp)"
+        context.stack_index = context.stack_index - 8
 
     result += f"#Declaration start\n"
     result += f"    push %rax\n"
 
     if (hasattr(node, 'left')):
         result = process_expression(node.left, result, context)
-        result += f"    movq %rax, {context.stack_index}(%rbp)\n\n"
+        result += f"    movq %rax, {context.stack_index + 8}(%rbp)\n\n"
 
     result += f"#Declaration end\n"
 
-    context.stack_index = context.stack_index - 8
-    return result, context
+    return result
 
 
 def process_function(node, result, context):
@@ -89,7 +110,7 @@ def process_function(node, result, context):
 
     for statement in node.statements:
         if isinstance(statement, DeclarationNode):
-            result, new_context = generate_declaration(
+            result = generate_declaration(
                 statement, result, new_context)
 
         else:
@@ -110,7 +131,7 @@ def generate_block(block, result, context):
 
     for statement in block.statements:
         if isinstance(statement,   DeclarationNode):
-            result, new_context = generate_declaration(
+            result = generate_declaration(
                 statement, result, new_context)
         else:
             new_variables_data = new_context.variables_data | new_context.current_scope
@@ -240,7 +261,7 @@ def generate_statement(block, result, context):
         new_context.labels.post_expression_label = for_post_expression_label
 
         result += '\n'
-        result, new_context = generate_declaration(
+        result = generate_declaration(
             block.initial_expression, result, new_context)
         result += f"\n#For condition start\n"
 

@@ -1,6 +1,6 @@
 class ProgramNode:
     def __init__(self):
-        self.statements = []
+        self.top_level_items = []
 
 
 class FunctionNode:
